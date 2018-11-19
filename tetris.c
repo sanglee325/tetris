@@ -428,17 +428,143 @@ void insertNode(Node *root, Node *child){
 
 }
 
-Node* deleteNode(Node* root, Node *parent){
-
-    NumData--;
-
+Node *getNode(Node* ptr, Node* pre, int rank){
+    if(ptr != NULL){
+        getNode(ptr->leftChild, ptr, rank);
+        rank--;
+        if(rank == 0){
+            if(ptr == Root) return Root;
+            else return ptr;
+        }
+        getNode(ptr->rightChild, ptr, rank);
+    }
+}
+Node *getPreNode(Node* ptr, Node* pre, int rank){
+    if(ptr != NULL){
+        getPreNode(ptr->leftChild, ptr, rank);
+        rank--;
+        if(rank == 0){
+            if(ptr == Root) return Root;
+            else return pre;
+        }
+        getPreNode(ptr->rightChild, ptr, rank);
+    }
 }
 
+void deleteNode(Node* parent, Node* target){
+    Node *temp;
+    Node *smallest;
+
+    if(target == Root){
+      if(target->leftChild == NULL && target->rightChild == NULL){
+          parent->leftChild = NULL;
+          free(target);
+      }
+      else if(target->leftChild == NULL){
+          Root = target->rightChild;
+          free(target);
+      }
+      else if(target->rightChild == NULL){
+          Root = target->leftChild;
+          free(target);
+      }
+      else{
+          temp = target->leftChild;
+          Root = target->leftChild;
+          smallest = temp->rightChild;
+          if(smallest == NULL)  
+            temp->rightChild = target->rightChild;
+          else{  
+            while(smallest != NULL){
+              if(smallest->rightChild == NULL) break;
+              smallest = smallest->rightChild;
+            }
+            smallest->rightChild = target->rightChild;
+          }
+          free(target);
+      }
+    
+    }
+    if(parent->leftChild == target){
+      if(target->leftChild == NULL && target->rightChild == NULL){
+          parent->leftChild = NULL;
+          free(target);
+      }
+      else if(target->leftChild == NULL){
+          temp = target->rightChild;
+          parent->leftChild = temp;
+          free(target);
+      }
+      else if(target->rightChild == NULL){
+          temp = target->leftChild;
+          parent->leftChild = temp;
+          free(target);
+      }
+      else{
+          temp = target->leftChild;
+          parent->leftChild = temp;
+          smallest = temp->rightChild;
+          if(smallest == NULL)  
+            temp->rightChild = target->rightChild;
+          else{  
+            while(smallest != NULL){
+              if(smallest->rightChild == NULL) break;
+              smallest = smallest->rightChild;
+            }
+            smallest->rightChild = target->rightChild;
+          }
+          free(target);
+      }
+    }
+
+    if(parent->rightChild == target){
+      if(target->leftChild == NULL && target->rightChild == NULL){
+          parent->rightChild = NULL;
+          free(target);
+      }
+      else if(target->leftChild == NULL){
+          temp = target->rightChild;
+          parent->rightChild = temp;
+          free(target);
+      }
+      else if(target->rightChild == NULL){
+          temp = target->leftChild;
+          parent->rightChild = temp;
+          free(target);
+      }
+      else{
+          temp = target->leftChild;
+          parent->rightChild = temp;
+          smallest = temp->rightChild;
+          if(smallest == NULL)
+              temp->rightChild = target->rightChild;
+          else{
+            while(1){
+                if(smallest->rightChild == NULL) break;
+                smallest = smallest->rightChild;
+            }
+            smallest->rightChild = target->rightChild;
+          }
+          free(target);
+      }
+    }
+    NumData--;
+}
 void printInorder(Node* ptr, FILE *fp){
     if(ptr != NULL){
         printInorder(ptr->leftChild, fp);
         fprintf(fp, "%s %d\n", ptr->name, ptr->score);
         printInorder(ptr->rightChild, fp);
+    }
+    else return;
+}
+
+void searchInorder(Node* ptr, char *name){
+    if(ptr != NULL){
+        searchInorder(ptr->leftChild, name);
+        if(strcmp(ptr->name, name) == 0)
+          printw("%-16s | %d\n", ptr->name, ptr->score);
+        searchInorder(ptr->rightChild, name);
     }
     else return;
 }
@@ -457,7 +583,8 @@ void rankInorder(Node* ptr, int x, int y){
 void rank(){
     int x = -1, y = -1;
     char name[NAMELEN];
-    int rank;
+    int rank, deleteRank;
+    Node* delNode = NULL, *preNode = NULL;
     listRankFlag = 0;
 
     // user code
@@ -487,9 +614,36 @@ void rank(){
             rankInorder(Root, x, y);
         }
         wgetch(stdscr);
+        break;
       case '2' :
+        echo();
+        printw("Input the name: ");
+        scanw("%s", name);
+        noecho();
+        printw("\n      name     |   score   \n");
+        printw("------------------------------\n");
+       
+        searchInorder(Root, name);
+        wgetch(stdscr);
         break;
       case '3' :
+        echo();
+        printw("Input the rank: ");
+        scanw("%d", &deleteRank);
+        noecho();
+
+        if(deleteRank > NumData || deleteRank < 1)
+            printw("search failure: the rank is not in the list\n");
+        else{
+          delNode = getNode(Root, Root, deleteRank);
+          preNode = getPreNode(Root, Root, deleteRank);
+          printw("\n      name     |   score   \n");
+          printw("------------------------------\n");
+          printw("%-16s | %d\n", delNode->name, delNode->score);
+        }
+        deleteNode(preNode, delNode);
+        printw("result: the rank deleted\n");
+        wgetch(stdscr);
         break;
       default : break;
     }

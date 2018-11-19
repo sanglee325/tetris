@@ -49,8 +49,11 @@ int listRankFlag;
 
 Node *createNode(char* name, int score);
 void insertNode(Node* root, Node* child);
-Node *deleteNode(Node* root, Node* parent);
+void deleteNode(Node* parent, Node* target);
+Node *getNode(Node* ptr, Node* pre, int rank);
 void printInorder(Node* ptr, FILE *fp);
+void rankInorder(Node* ptr, int x, int y);
+void searchInorder(Node* ptr, char *name);
 
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={

@@ -1,10 +1,9 @@
-9
-Jacob 20340
+8
 Park 17990
 Jacob 620
+Flake 500
 Smith 300
 Pikachu 150
 Raccoon 130
 Coffee 110
 Pizza 100
-Chicken 60
