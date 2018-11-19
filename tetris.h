@@ -43,7 +43,9 @@ typedef struct _Node{
     struct _Node* rightChild;
 }Node;
 
+Node *head;
 Node *Root;
+Node *targetParent;
 int NumData;
 int listRankFlag;
 

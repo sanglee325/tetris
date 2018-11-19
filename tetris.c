@@ -434,120 +434,52 @@ Node *getNode(Node* ptr, Node* pre, int rank){
         rank--;
         if(rank == 0){
             if(ptr == Root) return Root;
-            else return ptr;
+            else {
+                targetParent = pre;
+                return ptr;
+            }
         }
         getNode(ptr->rightChild, ptr, rank);
     }
 }
-Node *getPreNode(Node* ptr, Node* pre, int rank){
-    if(ptr != NULL){
-        getPreNode(ptr->leftChild, ptr, rank);
-        rank--;
-        if(rank == 0){
-            if(ptr == Root) return Root;
-            else return pre;
-        }
-        getPreNode(ptr->rightChild, ptr, rank);
-    }
-}
 
 void deleteNode(Node* parent, Node* target){
-    Node *temp;
-    Node *smallest;
+    Node *smallest, *temp;
 
-    if(target == Root){
-      if(target->leftChild == NULL && target->rightChild == NULL){
-          parent->leftChild = NULL;
-          free(target);
-      }
-      else if(target->leftChild == NULL){
-          Root = target->rightChild;
-          free(target);
-      }
-      else if(target->rightChild == NULL){
-          Root = target->leftChild;
-          free(target);
-      }
-      else{
-          temp = target->leftChild;
-          Root = target->leftChild;
-          smallest = temp->rightChild;
-          if(smallest == NULL)  
-            temp->rightChild = target->rightChild;
-          else{  
-            while(smallest != NULL){
-              if(smallest->rightChild == NULL) break;
-              smallest = smallest->rightChild;
-            }
-            smallest->rightChild = target->rightChild;
-          }
-          free(target);
-      }
-    
-    }
-    if(parent->leftChild == target){
-      if(target->leftChild == NULL && target->rightChild == NULL){
-          parent->leftChild = NULL;
-          free(target);
-      }
-      else if(target->leftChild == NULL){
-          temp = target->rightChild;
-          parent->leftChild = temp;
-          free(target);
-      }
-      else if(target->rightChild == NULL){
-          temp = target->leftChild;
-          parent->leftChild = temp;
-          free(target);
-      }
-      else{
-          temp = target->leftChild;
-          parent->leftChild = temp;
-          smallest = temp->rightChild;
-          if(smallest == NULL)  
-            temp->rightChild = target->rightChild;
-          else{  
-            while(smallest != NULL){
-              if(smallest->rightChild == NULL) break;
-              smallest = smallest->rightChild;
-            }
-            smallest->rightChild = target->rightChild;
-          }
-          free(target);
-      }
-    }
+    if(target == Root)
+        parent = head;
 
-    if(parent->rightChild == target){
-      if(target->leftChild == NULL && target->rightChild == NULL){
-          parent->rightChild = NULL;
-          free(target);
-      }
-      else if(target->leftChild == NULL){
-          temp = target->rightChild;
-          parent->rightChild = temp;
-          free(target);
-      }
-      else if(target->rightChild == NULL){
-          temp = target->leftChild;
-          parent->rightChild = temp;
-          free(target);
-      }
-      else{
-          temp = target->leftChild;
-          parent->rightChild = temp;
-          smallest = temp->rightChild;
-          if(smallest == NULL)
-              temp->rightChild = target->rightChild;
-          else{
-            while(1){
+    if(target->leftChild == NULL && target->rightChild == NULL){
+        if(parent->leftChild == target) parent->leftChild = NULL;
+        else if(parent->rightChild == target) parent->rightChild = NULL;
+        free(target);
+    }
+    else if(target->leftChild == NULL){
+        if(parent->leftChild == target) parent->leftChild = target->rightChild;
+        else if(parent->rightChild == target) parent->rightChild = target->rightChild;
+        free(target);
+    }
+    else if(target->rightChild == NULL){
+        if(parent->leftChild == target) parent->leftChild = target->leftChild;
+        else if(parent->rightChild == target) parent->rightChild = target->leftChild;
+        free(target);
+    }
+    else{
+        if(parent->leftChild == target) parent->leftChild = target->leftChild;
+        else if(parent->rightChild == target) parent->rightChild = target->leftChild;
+        smallest = temp->rightChild;
+        if(smallest == NULL)  
+          temp->rightChild = target->rightChild;
+        else{  
+            while(smallest != NULL){
                 if(smallest->rightChild == NULL) break;
                 smallest = smallest->rightChild;
             }
             smallest->rightChild = target->rightChild;
-          }
-          free(target);
-      }
+        }
+        free(target);
     }
+    Root = head->leftChild;
     NumData--;
 }
 void printInorder(Node* ptr, FILE *fp){
@@ -555,6 +487,7 @@ void printInorder(Node* ptr, FILE *fp){
         printInorder(ptr->leftChild, fp);
         fprintf(fp, "%s %d\n", ptr->name, ptr->score);
         printInorder(ptr->rightChild, fp);
+        free(ptr);
     }
     else return;
 }
@@ -583,10 +516,13 @@ void rankInorder(Node* ptr, int x, int y){
 void rank(){
     int x = -1, y = -1;
     char name[NAMELEN];
-    int rank, deleteRank;
-    Node* delNode = NULL, *preNode = NULL;
+    int rank, deleteRank = 0;
+    Node* delNode = NULL, *parent = NULL;
     listRankFlag = 0;
+    head = malloc(sizeof(Node));
 
+    head->leftChild = Root;
+    head->rightChild = NULL;
     // user code
     clear();
     printw("1. list ranks from X to Y\n");
@@ -632,21 +568,26 @@ void rank(){
         scanw("%d", &deleteRank);
         noecho();
 
-        if(deleteRank > NumData || deleteRank < 1)
+        if(deleteRank > NumData || deleteRank <= 0){
             printw("search failure: the rank is not in the list\n");
+            wgetch(stdscr);
+            break;
+        }
         else{
+          targetParent = NULL;
           delNode = getNode(Root, Root, deleteRank);
-          preNode = getPreNode(Root, Root, deleteRank);
           printw("\n      name     |   score   \n");
           printw("------------------------------\n");
           printw("%-16s | %d\n", delNode->name, delNode->score);
         }
-        deleteNode(preNode, delNode);
+        deleteNode(targetParent, delNode);
         printw("result: the rank deleted\n");
         wgetch(stdscr);
         break;
       default : break;
     }
+
+    free(head);
 
 }
 
