@@ -55,7 +55,7 @@ void deleteNode(Node* parent, Node* target);
 Node *getNode(Node* ptr, Node* pre, int rank);
 void printInorder(Node* ptr, FILE *fp);
 void rankInorder(Node* ptr, int x, int y);
-void searchInorder(Node* ptr, char *name);
+void searchInorder(Node* ptr, char *name, int *flag);
 
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={

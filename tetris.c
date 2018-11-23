@@ -467,9 +467,9 @@ void deleteNode(Node* parent, Node* target){
     else{
         if(parent->leftChild == target) parent->leftChild = target->leftChild;
         else if(parent->rightChild == target) parent->rightChild = target->leftChild;
-        smallest = temp->rightChild;
+        smallest = parent->rightChild;
         if(smallest == NULL)  
-          temp->rightChild = target->rightChild;
+            parent->rightChild = target->rightChild;
         else{  
             while(smallest != NULL){
                 if(smallest->rightChild == NULL) break;
@@ -492,12 +492,14 @@ void printInorder(Node* ptr, FILE *fp){
     else return;
 }
 
-void searchInorder(Node* ptr, char *name){
+void searchInorder(Node* ptr, char *name, int *flag){
     if(ptr != NULL){
-        searchInorder(ptr->leftChild, name);
-        if(strcmp(ptr->name, name) == 0)
-          printw("%-16s | %d\n", ptr->name, ptr->score);
-        searchInorder(ptr->rightChild, name);
+        searchInorder(ptr->leftChild, name, flag);
+        if(strcmp(ptr->name, name) == 0){
+            *flag = 1;
+            printw("%-16s | %d\n", ptr->name, ptr->score);
+        }
+        searchInorder(ptr->rightChild, name, flag);
     }
     else return;
 }
@@ -516,7 +518,7 @@ void rankInorder(Node* ptr, int x, int y){
 void rank(){
     int x = -1, y = -1;
     char name[NAMELEN];
-    int rank, deleteRank = 0;
+    int rank, deleteRank = 0, searchFlag = 0;
     Node* delNode = NULL, *parent = NULL;
     listRankFlag = 0;
     head = malloc(sizeof(Node));
@@ -539,10 +541,10 @@ void rank(){
         scanw("%d", &y);
         if(y == -1) y = NumData;
         noecho();
-        printw("\n      name     |   score   \n");
+        printw("\n      name       |   score   \n");
         printw("------------------------------\n");
-        if(x > y || x > NumData || y > NumData){
-            printw("search failure: no rank in list\n");
+        if(x > y || x > NumData || y > NumData || x < 1 || y < 1){
+            printw("\nsearch failure: no rank in list\n");
             wgetch(stdscr);
             break;
         }
@@ -556,10 +558,13 @@ void rank(){
         printw("Input the name: ");
         scanw("%s", name);
         noecho();
-        printw("\n      name     |   score   \n");
+        printw("\n      name       |   score   \n");
         printw("------------------------------\n");
-       
-        searchInorder(Root, name);
+
+        searchInorder(Root, name, &searchFlag);
+        if(!searchFlag)
+          printw("\nsearch failure: the rank is not in the list\n");
+
         wgetch(stdscr);
         break;
       case '3' :
@@ -567,21 +572,18 @@ void rank(){
         printw("Input the rank: ");
         scanw("%d", &deleteRank);
         noecho();
+        printw("\n      name       |   score   \n");
+        printw("------------------------------\n");
 
-        if(deleteRank > NumData || deleteRank <= 0){
-            printw("search failure: the rank is not in the list\n");
-            wgetch(stdscr);
-            break;
-        }
+        if(deleteRank > NumData || deleteRank <= 0)
+            printw("\nsearch failure: the rank is not in the list\n");
         else{
           targetParent = NULL;
           delNode = getNode(Root, Root, deleteRank);
-          printw("\n      name     |   score   \n");
-          printw("------------------------------\n");
           printw("%-16s | %d\n", delNode->name, delNode->score);
+          deleteNode(targetParent, delNode);
+          printw("\nresult: the rank deleted\n");
         }
-        deleteNode(targetParent, delNode);
-        printw("result: the rank deleted\n");
         wgetch(stdscr);
         break;
       default : break;
