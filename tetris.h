@@ -23,18 +23,26 @@
 // menu number
 #define MENU_PLAY '1'
 #define MENU_RANK '2'
+#define MENU_REC '3' 
 #define MENU_EXIT '4'
 
 // 사용자 이름의 길이
 #define NAMELEN 16
-
+#define VISIBLE_BLOCKS (1 + 2)
 #define CHILDREN_MAX 36
 
 typedef struct _RecNode{
-	int lv,score;
-	char (*f)[WIDTH];
+	int lv, score;
+	char f[HEIGHT][WIDTH];
+	int x, y, r;
 	struct _RecNode *c[CHILDREN_MAX];
 } RecNode;
+
+typedef struct _MdfRec{
+	int lv, score;
+	char f[HEIGHT][WIDTH];
+	struct _MdfRec **child; //자식 수 만큼 malloc/free
+} MdfRec;
 
 typedef struct _Node{
     char name[NAMELEN];
@@ -56,6 +64,16 @@ Node *getNode(Node* ptr, Node* pre, int rank);
 void printInorder(Node* ptr, FILE *fp);
 void rankInorder(Node* ptr, int x, int y);
 void searchInorder(Node* ptr, char *name, int *flag);
+
+MdfRec *modRoot;
+bool RCflag;
+void InitRecommend();
+void DrawRecommend(int y, int x, int blockID,int blockRotate);
+void rootInit(RecNode* root);
+void DelRecNode(RecNode *del);
+
+int modifiedRecommend(MdfRec* root);
+void mid(int *cScore, bool *s, int num);
 
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={
