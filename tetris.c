@@ -224,7 +224,7 @@ void play(){
 		}
 
 		command = GetCommand();
-		if((RCflag == true &&(command=='q'||command=='Q'))||(RCflag == 0 && ProcessCommand(command)==QUIT)){
+		if((RCflag == true &&(command=='q'||command=='Q'))||(RCflag == false && ProcessCommand(command)==QUIT)){
 			alarm(0);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 			move(HEIGHT/2,WIDTH/2-4);
@@ -270,7 +270,6 @@ int CheckToMove(char f[HEIGHT][WIDTH],int currentBlock,int blockRotate, int bloc
     }
     return 1;
 }
-//---------
 void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRotate, int blockY, int blockX){
     // user code
     int i, j;
@@ -288,6 +287,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
                       break;
       default : break;
     }
+    /*
 
 	for(i = 0; i < BLOCK_HEIGHT; i++){
 		for(j = 0; j < BLOCK_WIDTH; j++){
@@ -310,7 +310,14 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 				printw(".");
 			}
 		}
-    }
+    }*/
+    DrawBlock(prevY, prevX, currentBlock, rotate, '.');
+	DrawRecommend(recommendY,recommendX,currentBlock,recommendR);
+
+    while(CheckToMove(field, currentBlock, rotate, prevY, prevX))
+        prevY++;
+
+    DrawBlock(prevY - 1, prevX, currentBlock, rotate, '.');
     DrawBlockWithFeatures(blockY, blockX, currentBlock, blockRotate);
 	move(HEIGHT, WIDTH+10);
 }
@@ -335,22 +342,6 @@ void BlockDown(int sig){
         score += AddBlockToField(field, nextBlock[0], blockRotate, blockY, blockX);
         score += DeleteLine(field);
 
-        /*
-		DelRecNode(recRoot);
-
-		recRoot = (RecNode*)malloc(sizeof(RecNode));
-		recRoot->lv = recRoot->score = 0;
-		recRoot->x = blockX;
-		recRoot->y = blockY;
-		recRoot->r = blockRotate;
-
-		for(i = 0; i < HEIGHT; i++)
-			for(j = 0; j < WIDTH; j++)
-				recRoot->f[i][j] = field[i][j];
-		for(i = 0; i < CHILDREN_MAX; i++)
-			recRoot->c[i] = NULL;
-        */ //실습코드
-
         for(i = 0; i < VISIBLE_BLOCKS - 1; i++)
             nextBlock[i] = nextBlock[i + 1];
         nextBlock[VISIBLE_BLOCKS - 1] = rand() % 7;
@@ -360,16 +351,6 @@ void BlockDown(int sig){
         blockRotate = 0;
         DrawField();
 
-  /*     // modRoot = (MdfRec*)malloc(sizeof(MdfRec));
-        modRoot->lv = 0;
-        modRoot->score = score;
-
-        for(i = 0; i < HEIGHT; i++)
-            for(j = 0; j < WIDTH; j++)
-                modRoot->f[i][j] = field[i][j];
-        modifiedRecommend(modRoot);
-       // free(modRoot);
-*/
         DrawNextBlock(nextBlock);
         DrawBlockWithFeatures(blockY, blockX, nextBlock[0], blockRotate);
     }
@@ -772,42 +753,6 @@ void DelRecNode(RecNode *del){
 		free(del);
 	}
 }
-/*
-void InitRecommend(){
-    int i, j;
-
-    for(i = 0; i < VISIBLE_BLOCKS; i++)
-	    nextBlock[i] = rand()%7;
-
-
-	for(i = 0; i < HEIGHT; i++)
-		for(j = 0; j < WIDTH; j++)
-            modRoot->f[i][j] = field[i][j] = 0;
-
-	blockRotate=0;
-	blockY=-1;
-	blockX=WIDTH/2-2;
-	score=0;	
-	gameOver=0;
-	timed_out=0;
-
-	DrawOutline();
-	DrawField();
-
-    modifiedRecommend(modRoot);
-    free(modRoot);
-    
-    DrawBlockWithFeatures(blockY, blockX, nextBlock[0], blockRotate);
-    DrawNextBlock(nextBlock);
-    PrintScore(score);
-
-    
-    //field 초기화, nextBlock 생성 등등 기본 밑작업
-    //1번 항목으로 들어갈때는 이 함수가 필요없도록 설계한다
-
-
-}*/
-
 void recommendedPlay(){
 	// user code
     RCflag = true;
@@ -851,8 +796,10 @@ int modifiedRecommend(MdfRec* root){
     for(k = 0; k < childNum; k++){
         root->child[k] = (MdfRec*)malloc(sizeof(MdfRec));
         for(i = 0; i < HEIGHT; i++)
-            for(j = 0; j < WIDTH; j++)
+            for(j = 0; j < WIDTH; j++){
                 root->child[k]->f[i][j] = root->f[i][j];
+			    root->child[k]->lv = root->lv + 1;
+            }
     }
     //field 복사
 
@@ -862,51 +809,32 @@ int modifiedRecommend(MdfRec* root){
 		for(j = 0; j < rotate[i]; j++, posX++, idx++){
 			posY = -1;
 			if(!CheckToMove(root->f, nextBlock[id], i, -1, posX)) continue;
-			root->child[idx]->lv = root->lv + 1;
 			while(CheckToMove(root->child[idx]->f, nextBlock[id], i, posY + 1, posX)) posY++;
 			root->child[idx]->score = root->score + AddBlockToField(root->child[idx]->f, nextBlock[id], i, posY, posX);
 			root->child[idx]->score += DeleteLine(root->child[idx]->f);
-            childScore[idx] = root->child[idx]->score;//ddddd
-			if(root->child[idx]->lv < VISIBLE_BLOCKS - 1) tmpScore = modifiedRecommend(root->child[idx]);
-			else tmpScore = root->child[idx]->score;
-			if(tmpScore >= max){
-				max = tmpScore;
-				if(id == 0){
-					recommendR = i; recommendY = posY; recommendX = posX;
-				}
-			}
-		}
-	}
-    /*
+            root->child[idx]->r = i; root->child[idx]->x = posX; root->child[idx]->y = posY;
+            childScore[idx] = root->child[idx]->score;
+        }
+    }
+
     mid(childScore, search, childNum);
 
-    idx = 0;
-    for(i = 0; i < rotateNum; i++){
-        posX = -2;
-        for(j = 0; j < rotate[i]; j++, posX++, idx++){
-            posY = -1;
-			if(!CheckToMove(root->f, nextBlock[id], i, -1, posX)) continue;
-            while(CheckToMove(root->child[idx]->f, nextBlock[id], i, posY + 1, posX)) posY++;
-            if(search[idx] == true){
-                if(root->child[idx]->lv < VISIBLE_BLOCKS - 1) tmpScore = modifiedRecommend(root->child[idx]);
-                else tmpScore = root->child[idx]->score;
-                if(tmpScore >= max){
-                    max = tmpScore;
-                    if(id == 0)
-                      recommendR = i; recommendX = posX; recommendY = posY;
-                }
+    for(idx = 0; idx < childNum; idx++){
+        if(search[idx] == true && root->child[idx]->lv < VISIBLE_BLOCKS - 1){
+            tmpScore = modifiedRecommend(root->child[idx]);
+        }
+        else tmpScore = root->child[idx]->score;
+        if(tmpScore >= max){
+            max = tmpScore;
+            if(id == 0){
+                recommendR = root->child[idx]->r; recommendY = root->child[idx]->y; recommendX = root->child[idx]->x;
             }
         }
     }
-    */
+
     free(childScore);
     free(search);
-    /*
-    for(k = 0; k < childNum; k++)
-      free(root->child[k]);
-    free(root->child);//???
-    if(Nflag == true) free(root);
-    */
+
     return max;
     
 }
