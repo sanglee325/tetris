@@ -14,9 +14,9 @@ int main(){
     while(!exit){
         clear();
         switch(menu()){
-          case MENU_PLAY: play(); break;
+          case MENU_PLAY: RCflag = false; play(); break;
           case MENU_RANK: rank(); break;
-          case MENU_REC : recommendedPlay(); break;
+          case MENU_REC : RCflag = true; recommendedPlay(); break;
           case MENU_EXIT: exit=1; break;
           default: break;
         }
@@ -224,7 +224,7 @@ void play(){
 		}
 
 		command = GetCommand();
-		if((RCflag == true &&(command=='q'||command=='Q'))||(RCflag == false && ProcessCommand(command)==QUIT)){
+		if(ProcessCommand(command)==QUIT){
 			alarm(0);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 			move(HEIGHT/2,WIDTH/2-4);
@@ -243,7 +243,7 @@ void play(){
 	printw("GameOver!!");
 	refresh();
 	getch();
-	if(RCflag == false) newRank(score);
+	newRank(score);
 }
 
 char menu(){
@@ -755,18 +755,48 @@ void DelRecNode(RecNode *del){
 }
 void recommendedPlay(){
 	// user code
-    RCflag = true;
-    play();
-    RCflag = false;
+	int command;
+	clear();
+    start = clock();
+	act.sa_handler = BlockDown;
+	sigaction(SIGALRM,&act,&oact);
+	InitTetris();
+	do{
+       // displayTime();
+		if(timed_out==0){
+			alarm(1);
+			timed_out=1;
+		}
+
+		command = GetCommand();
+		if (command == QUIT) {
+			alarm(0);
+			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+			move(HEIGHT/2,WIDTH/2-4);
+			printw("Good-bye!!");
+			refresh();
+			getch();
+			return;
+		}
+	}while(!gameOver);
+
+	alarm(0);
+	getch();
+	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
+	move(HEIGHT/2,WIDTH/2-4);
+	printw("GameOver!!");
+	refresh();
+	getch();
 }
 
 int modifiedRecommend(MdfRec* root){
     int max = 0;
     int id, childNum = 0, rotateNum = 0, rotate[4];
     int *childScore, tmpScore;
-    bool *search, Nflag = false;
+    bool *search, Nflag = false, maxFlag = false;
     int i, j, idx, k;
     int posX, posY;
+    int recR, recX, recY;
 
     if(root == NULL){
         root = (MdfRec*)malloc(sizeof(MdfRec));
@@ -826,15 +856,37 @@ int modifiedRecommend(MdfRec* root){
         else tmpScore = root->child[idx]->score;
         if(tmpScore >= max){
             max = tmpScore;
-            if(id == 0){
-                recommendR = root->child[idx]->r; recommendY = root->child[idx]->y; recommendX = root->child[idx]->x;
+            if(id == 0 && maxFlag == false){
+                recommendR = root->child[idx]->r;
+                recommendY = root->child[idx]->y;
+                recommendX = root->child[idx]->x;
+                maxFlag = true;
             }
+            else if(id == 0 && maxFlag == true){
+                if(recommendY <= root->child[idx]->y){
+                    recommendR = root->child[idx]->r;
+                    recommendY = root->child[idx]->y;
+                    recommendX = root->child[idx]->x;
+                }
+            }
+
         }
     }
 
+        
+    
+
     free(childScore);
     free(search);
-
+/*
+    for(k = 0; k < childNum; k++){
+        free(root->child[k]);
+    }
+    free(root->child);
+    if(Nflag == false){
+        free(root);
+    }
+*/
     return max;
     
 }
