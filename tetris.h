@@ -28,8 +28,7 @@
 
 // 사용자 이름의 길이
 #define NAMELEN 16
-#define VISIBLE_BLOCKS (2 + 2)
-
+#define VISIBLE_BLOCKS (1 + 2)
 #define CHILDREN_MAX 36
 
 typedef struct _RecNode{
@@ -43,7 +42,7 @@ typedef struct _MdfRec{
 	int lv, score;
 	char f[HEIGHT][WIDTH];
 	int x, y, r;
-	struct _MdfRec **child; //자식 수 만큼 malloc/free
+	struct _MdfRec **child; 
 } MdfRec;
 
 typedef struct _Node{
@@ -69,13 +68,16 @@ void searchInorder(Node* ptr, char *name, int *flag);
 
 MdfRec *modRoot;
 bool RCflag;
+void InitRecommend();
 void DrawRecommend(int y, int x, int blockID,int blockRotate);
 void rootInit(RecNode* root);
 void DelRecNode(RecNode *del);
 
-clock_t start, end;
+time_t start;
 int modifiedRecommend(MdfRec* root);
 void mid(int *cScore, bool *s, int num);
+void displayTime();
+void CheckOver();
 
 /* [blockShapeID][# of rotate][][]*/
 const char block[NUM_OF_SHAPE][NUM_OF_ROTATE][BLOCK_HEIGHT][BLOCK_WIDTH] ={

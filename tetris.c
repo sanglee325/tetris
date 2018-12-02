@@ -14,9 +14,9 @@ int main(){
     while(!exit){
         clear();
         switch(menu()){
-          case MENU_PLAY: RCflag = false; play(); break;
+          case MENU_PLAY: play(); break;
           case MENU_RANK: rank(); break;
-          case MENU_REC : RCflag = true; recommendedPlay(); break;
+          case MENU_REC : recommendedPlay(); break;
           case MENU_EXIT: exit=1; break;
           default: break;
         }
@@ -47,8 +47,10 @@ void InitTetris(){
 	DrawOutline();
 	DrawField();
     DrawBlockWithFeatures(blockY, blockX, nextBlock[0], blockRotate);
-	DrawNextBlock(nextBlock);
-	PrintScore(score);
+    DrawNextBlock(nextBlock);
+    PrintScore(score);
+    if(RCflag == true) 
+      displayTime();
 }
 
 void DrawOutline(){	
@@ -211,9 +213,29 @@ void DrawBox(int y,int x, int height, int width){
 	addch(ACS_LRCORNER);
 }
 
+void displayTime(){
+    double duration;
+
+	move(19, WIDTH + 10);
+	printw("TIME(t)");
+	DrawBox(20, WIDTH + 10, 1, 12);
+	
+	move(23, WIDTH + 10);
+	printw("SCORE/TIME(t)");
+	DrawBox(24, WIDTH + 10, 1, 12);
+
+	duration = ((double)(clock() - start)) / (CLOCKS_PER_SEC);
+	move(21, WIDTH + 11);
+	printw("%.3lf", duration);
+
+	move(25, WIDTH + 11);
+	printw("%.3lf",(double)score / duration);
+}
+
 void play(){
-	int command;
+	int i, command;
 	clear();
+    if(RCflag == true) start = clock();
 	act.sa_handler = BlockDown;
 	sigaction(SIGALRM,&act,&oact);
 	InitTetris();
@@ -222,9 +244,13 @@ void play(){
 			alarm(1);
 			timed_out=1;
 		}
-
+        
 		command = GetCommand();
-		if(ProcessCommand(command)==QUIT){
+        if(RCflag == true) {
+            displayTime();
+            CheckOver();
+        }
+		if((RCflag == true &&(command=='q'||command=='Q'))||(RCflag == 0 && ProcessCommand(command)==QUIT)){
 			alarm(0);
 			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
 			move(HEIGHT/2,WIDTH/2-4);
@@ -243,7 +269,7 @@ void play(){
 	printw("GameOver!!");
 	refresh();
 	getch();
-	newRank(score);
+	if(RCflag == false) newRank(score);
 }
 
 char menu(){
@@ -287,8 +313,6 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
                       break;
       default : break;
     }
-    /*
-
 	for(i = 0; i < BLOCK_HEIGHT; i++){
 		for(j = 0; j < BLOCK_WIDTH; j++){
 			if(block[currentBlock][rotate][i][j] == 1 && prevY + i >= 0){
@@ -310,14 +334,7 @@ void DrawChange(char f[HEIGHT][WIDTH],int command,int currentBlock,int blockRota
 				printw(".");
 			}
 		}
-    }*/
-    DrawBlock(prevY, prevX, currentBlock, rotate, '.');
-	DrawRecommend(recommendY,recommendX,currentBlock,recommendR);
-
-    while(CheckToMove(field, currentBlock, rotate, prevY, prevX))
-        prevY++;
-
-    DrawBlock(prevY - 1, prevX, currentBlock, rotate, '.');
+    }
     DrawBlockWithFeatures(blockY, blockX, currentBlock, blockRotate);
 	move(HEIGHT, WIDTH+10);
 }
@@ -390,6 +407,9 @@ int DeleteLine(char f[HEIGHT][WIDTH]){
             }
         }
     }
+
+    for(j = 0; j < WIDTH; j++)
+        f[0][j] = 0;
 
     return count * count * 100;
 }
@@ -753,40 +773,12 @@ void DelRecNode(RecNode *del){
 		free(del);
 	}
 }
+
 void recommendedPlay(){
 	// user code
-	int command;
-	clear();
-    start = clock();
-	act.sa_handler = BlockDown;
-	sigaction(SIGALRM,&act,&oact);
-	InitTetris();
-	do{
-       // displayTime();
-		if(timed_out==0){
-			alarm(1);
-			timed_out=1;
-		}
-
-		command = GetCommand();
-		if (command == QUIT) {
-			alarm(0);
-			DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
-			move(HEIGHT/2,WIDTH/2-4);
-			printw("Good-bye!!");
-			refresh();
-			getch();
-			return;
-		}
-	}while(!gameOver);
-
-	alarm(0);
-	getch();
-	DrawBox(HEIGHT/2-1,WIDTH/2-5,1,10);
-	move(HEIGHT/2,WIDTH/2-4);
-	printw("GameOver!!");
-	refresh();
-	getch();
+    RCflag = true;
+    play();
+    RCflag = false;
 }
 
 int modifiedRecommend(MdfRec* root){
@@ -796,7 +788,6 @@ int modifiedRecommend(MdfRec* root){
     bool *search, Nflag = false, maxFlag = false;
     int i, j, idx, k;
     int posX, posY;
-    int recR, recX, recY;
 
     if(root == NULL){
         root = (MdfRec*)malloc(sizeof(MdfRec));
@@ -873,21 +864,10 @@ int modifiedRecommend(MdfRec* root){
         }
     }
 
-        
-    
-
     free(childScore);
     free(search);
-/*
-    for(k = 0; k < childNum; k++){
-        free(root->child[k]);
-    }
-    free(root->child);
-    if(Nflag == false){
-        free(root);
-    }
-*/
     return max;
+    
     
 }
 
@@ -895,7 +875,7 @@ void mid(int *cScore, bool *s, int num){
     int *tmp = malloc(sizeof(int) * num);
     int i, j, swap, mid;
     for(i = 0; i < num; i++)
-      tmp[i] = cScore[i];
+        tmp[i] = cScore[i];
 
     for(i = 0; i < num - 1; i++){
         for(j = num - 1 ; j > i; j--){
@@ -914,4 +894,12 @@ void mid(int *cScore, bool *s, int num){
     }
 
     free(tmp);
+}
+
+void CheckOver(){
+    int i = 0;
+    for(i = 2; i < WIDTH - 2; i++){
+        if(field[1][i] == 1)
+          gameOver = 1;
+    }
 }
