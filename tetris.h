@@ -28,7 +28,7 @@
 
 // 사용자 이름의 길이
 #define NAMELEN 16
-#define VISIBLE_BLOCKS (1 + 2)
+#define VISIBLE_BLOCKS (2 + 2)
 #define CHILDREN_MAX 36
 
 typedef struct _RecNode{

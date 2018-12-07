@@ -846,22 +846,32 @@ int modifiedRecommend(MdfRec* root){
         }
         else tmpScore = root->child[idx]->score;
         if(tmpScore >= max){
-            max = tmpScore;
-            if(id == 0 && maxFlag == false){
-                recommendR = root->child[idx]->r;
-                recommendY = root->child[idx]->y;
-                recommendX = root->child[idx]->x;
-                maxFlag = true;
-            }
-            else if(id == 0 && maxFlag == true){
-                if(recommendY <= root->child[idx]->y){
+            if(id == 0){
+                if(maxFlag == false){
+                    max = tmpScore;
+                    recommendR = root->child[idx]->r;
+                    recommendY = root->child[idx]->y;
+                    recommendX = root->child[idx]->x;
+                    maxFlag = true;
+                }
+                else if(maxFlag == true && tmpScore > max){
+                    max = tmpScore;
                     recommendR = root->child[idx]->r;
                     recommendY = root->child[idx]->y;
                     recommendX = root->child[idx]->x;
                 }
+                else if(maxFlag == true && tmpScore == max){
+                    max = tmpScore;
+                    if(recommendY <= root->child[idx]->y){
+                        recommendR = root->child[idx]->r;
+                        recommendY = root->child[idx]->y;
+                        recommendX = root->child[idx]->x;
+                    }
+                }
             }
-
+            else max = tmpScore;
         }
+
     }
 
     free(childScore);
